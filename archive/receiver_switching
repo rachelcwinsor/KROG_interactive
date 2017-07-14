@@ -31,9 +31,8 @@
 #include "RF24.h"
 #include "printf.h"
 
-#define VOLT_ARRAY_SIZE 50
+#define VOLT_ARRAY_SIZE 20
 #define GYRO_ARRAY_SIZE 5
-#define V_THRESHOLD 0.10
 
 // Hardware configuration
 // Set up nRF24L01 radio on SPI bus plus pins 40 & 53
@@ -58,6 +57,7 @@ typedef struct package {
 
 int gIndex = 0;
 VectorInt16 gyroArray[GYRO_ARRAY_SIZE];
+VectorInt16 prev_gyroArray[GYRO_ARRAY_SIZE];
 
 //MAX9814
 const int sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
@@ -65,6 +65,7 @@ unsigned int sample;
 unsigned long previousTime = 0;
 int vIndex = 0;
 double voltArray[VOLT_ARRAY_SIZE];
+double prev_voltArray[VOLT_ARRAY_SIZE];
 boolean switchMusic;
 
 void setup(void)
@@ -122,10 +123,10 @@ void readRadio() {
   }
   if (gIndex > (GYRO_ARRAY_SIZE - 1) )
   {
-    for (int i = 0; i < GYRO_ARRAY_SIZE - 1; ++i) {
-      gyroArray[i] = gyroArray[i + 1];
+    for (int i = 0; i < GYRO_ARRAY_SIZE; ++i) {
+      prev_gyroArray[i] = gyroArray[i];
     }
-    --gIndex;
+    gIndex = 0;
   }
   gyroArray[gIndex] = dataIn.gyro;
   ++gIndex;
@@ -137,7 +138,7 @@ boolean checkMusic() {
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
   double sum;
-  //  Serial.println("CHECKING FOR MUSIC");
+  Serial.println("CHECKING FOR MUSIC");
 
   while (millis() - startMillis < sampleWindow)
   {
@@ -166,10 +167,19 @@ boolean checkMusic() {
   for (int i = 0; i < VOLT_ARRAY_SIZE; ++i) {
     sum += voltArray[i];
   }
-  Serial.println("0");
-
   double runningAverage = sum / VOLT_ARRAY_SIZE;
-  if (runningAverage < V_THRESHOLD) {
+  //  Serial.print(voltArray[0]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[1]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[2]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[3]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[4]);
+  //  Serial.print("\t");
+  //  Serial.println(runningAverage);
+  if (runningAverage < 0.10) {
     ++vIndex;
     return false;
   }
@@ -185,7 +195,7 @@ boolean listenMusic() {
   unsigned int signalMin = 1024;
   double sum;
 
-  //  Serial.println("LISTENING TO MUSIC");
+  Serial.println("LISTENING TO MUSIC");
 
   while (millis() - startMillis < sampleWindow)
   {
@@ -203,20 +213,30 @@ boolean listenMusic() {
     }
   }
   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
-  if (vIndex > (VOLT_ARRAY_SIZE - 1) ) { //if we are going to exceed the size of our array
-    for (int i = 0; i < VOLT_ARRAY_SIZE - 1; ++i)
-      voltArray[i] = voltArray[i + 1]; //remove oldest value and shift to left
-    --vIndex; //decrement vIndex to stay within confines of array
+  if (vIndex > (VOLT_ARRAY_SIZE - 1) )
+  {
+    for (int i = 0; i < VOLT_ARRAY_SIZE - 1; ++i) {
+      voltArray[i] = voltArray[i + 1];
+    }
+    --vIndex;
   }
   voltArray[vIndex] = (peakToPeak * 5.0) / 1024;  // convert to volts
-  for (int i = 0; i < VOLT_ARRAY_SIZE; ++i)
+  for (int i = 0; i < VOLT_ARRAY_SIZE; ++i) {
     sum += voltArray[i];
-
+  }
   double runningAverage = sum / VOLT_ARRAY_SIZE;
-  Serial.print(voltArray[vIndex]);
-  Serial.print("\t");
-  Serial.println(runningAverage);
-  if (runningAverage > V_THRESHOLD) {
+  //  Serial.print(voltArray[0]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[1]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[2]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[3]);
+  //  Serial.print("\t");
+  //  Serial.print(voltArray[4]);
+  //  Serial.print("\t");
+  //  Serial.println(runningAverage);
+  if (runningAverage > 0.10) {
     ++vIndex;
     return true;
   }
