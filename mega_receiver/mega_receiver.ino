@@ -74,7 +74,7 @@ void setup(void)
   startRadio();
 
   // Dump the configuration of the RF unit for debugging
-  //  radio.printDetails();
+  // radio.printDetails();
 }
 
 void loop() {
@@ -85,12 +85,10 @@ void loop() {
     //      readRadio();
     //    else
     //      listenMusic();
-    while (!switchMusic) {
+    while (!switchMusic)
       switchMusic = checkMusic();
-    }
-    while (switchMusic) {
+    while (switchMusic)
       switchMusic = listenMusic();
-    }
     previousTime = currentTime;
   }
 }
@@ -122,9 +120,8 @@ void readRadio() {
   }
   if (gIndex > (GYRO_ARRAY_SIZE - 1) )
   {
-    for (int i = 0; i < GYRO_ARRAY_SIZE - 1; ++i) {
+    for (int i = 0; i < GYRO_ARRAY_SIZE - 1; ++i)
       gyroArray[i] = gyroArray[i + 1];
-    }
     --gIndex;
   }
   gyroArray[gIndex] = dataIn.gyro;
@@ -136,39 +133,29 @@ boolean checkMusic() {
   unsigned int peakToPeak = 0;   // peak-to-peak level
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
+  double runningAverage;
   double sum;
-  //  Serial.println("CHECKING FOR MUSIC");
 
-  while (millis() - startMillis < sampleWindow)
-  {
+  while (millis() - startMillis < sampleWindow) {
     sample = analogRead(0);
-    if (sample < 1024)  // toss out spurious readings
-    {
+    if (sample < 1024) { // toss out spurious readings
       if (sample > signalMax)
-      {
         signalMax = sample;  // save just the max levels
-      }
       else if (sample < signalMin)
-      {
         signalMin = sample;  // save just the min levels
-      }
     }
   }
   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
-  if (vIndex > (VOLT_ARRAY_SIZE - 1) )
-  {
-    for (int i = 0; i < VOLT_ARRAY_SIZE - 1; ++i) {
+  if (vIndex > (VOLT_ARRAY_SIZE - 1) ) {
+    for (int i = 0; i < VOLT_ARRAY_SIZE - 1; ++i)
       voltArray[i] = voltArray[i + 1];
-    }
     --vIndex;
   }
   voltArray[vIndex] = (peakToPeak * 5.0) / 1024;  // convert to volts
-  for (int i = 0; i < VOLT_ARRAY_SIZE; ++i) {
+  for (int i = 0; i < VOLT_ARRAY_SIZE; ++i)
     sum += voltArray[i];
-  }
   Serial.println("0");
-
-  double runningAverage = sum / VOLT_ARRAY_SIZE;
+  runningAverage = sum / VOLT_ARRAY_SIZE;
   if (runningAverage < V_THRESHOLD) {
     ++vIndex;
     return false;
@@ -183,23 +170,16 @@ boolean listenMusic() {
   unsigned int peakToPeak = 0;   // peak-to-peak level
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
+  double runningAverage;
   double sum;
 
-  //  Serial.println("LISTENING TO MUSIC");
-
-  while (millis() - startMillis < sampleWindow)
-  {
+  while (millis() - startMillis < sampleWindow) {
     sample = analogRead(0);
-    if (sample < 1024)  // toss out spurious readings
-    {
+    if (sample < 1024) { // toss out spurious readings
       if (sample > signalMax)
-      {
         signalMax = sample;  // save just the max levels
-      }
       else if (sample < signalMin)
-      {
         signalMin = sample;  // save just the min levels
-      }
     }
   }
   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
@@ -211,8 +191,7 @@ boolean listenMusic() {
   voltArray[vIndex] = (peakToPeak * 5.0) / 1024;  // convert to volts
   for (int i = 0; i < VOLT_ARRAY_SIZE; ++i)
     sum += voltArray[i];
-
-  double runningAverage = sum / VOLT_ARRAY_SIZE;
+  runningAverage = sum / VOLT_ARRAY_SIZE;
   Serial.print(voltArray[vIndex]);
   Serial.print("\t");
   Serial.println(runningAverage);
