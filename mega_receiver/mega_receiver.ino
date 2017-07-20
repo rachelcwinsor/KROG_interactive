@@ -81,15 +81,15 @@ void loop() {
   unsigned long currentTime = millis();
   if (currentTime - previousTime >= testTime)
   {
-    //    if (radio.available())
-    //      readRadio();
-    //    else
-    //      listenMusic();
-    while (!switchMusic)
-      switchMusic = checkMusic();
-    while (switchMusic)
-      switchMusic = listenMusic();
-    previousTime = currentTime;
+    if (radio.available())
+      readRadio();
+    else {
+      while (!switchMusic)
+        switchMusic = checkMusic();
+      while (switchMusic)
+        switchMusic = listenMusic();
+      previousTime = currentTime;
+    }
   }
 }
 
